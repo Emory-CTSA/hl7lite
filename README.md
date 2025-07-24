@@ -1,6 +1,19 @@
 # waveform_streaming
 streaming data feed QC and wfdb conversion from Phillips Capsule
 
+# Running:
+1. convert HL7 files in a 1 hour folder into parquet files
+```
+   python convert_hl7aecg.py --rootdir {parent folder} --folders {list of child folders, space separated.}
+```
+2. qc the parquet files
+3. convert the parquet files to wfdb files.
+
+# Profiling:
+to generate profile, add the ```-m cProfile -o {output}.prof``` flags immediately after ```python```
+
+to visualize profile, use ```snakeviz {output}.prof```
+
 # Dockerization
 Reason for creating a docker image instead of going with python code with layers is because of size of layers. 
 Layer sizes are limited to 50MB compressed and 250MB uncompressed.
