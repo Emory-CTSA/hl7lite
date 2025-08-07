@@ -52,3 +52,13 @@ Building the actual docker image and pushing to ECR is done by the following com
    ```aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 471112573534.dkr.ecr.us-east-1.amazonaws.com```
 5. Push the image to registry
    ```docker push 471112573534.dkr.ecr.us-east-1.amazonaws.com/hl7-lambda:latest```
+
+
+# TODO
+here are some tasks that need to be done to improve performance
+1. Generate minute parquets.  This is meant for stream processing only so is separate from the hourly parquets.  The minute parquets will need to be deleted 
+2. Parse and store Alarms
+3. Parse and store vitals.
+4. Collect patient information from vitals internal or PID, alarms PID, and any other source.
+5. collect info about bed presence for each hl7 file.
+6. downed connection - need to check it too.
