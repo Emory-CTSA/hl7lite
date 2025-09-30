@@ -62,3 +62,9 @@ here are some tasks that need to be done to improve performance
 4. Collect patient information from vitals internal or PID, alarms PID, and any other source.
 5. collect info about bed presence for each hl7 file.
 6. downed connection - need to check it too.
+
+
+# issues:
+# a. PID|||860679383^^^BERNOULLI MRN^MR||TEST81|||||||||||||ACC860679383
+#    PID.18 is should be visit id?
+# b. duplicates : may be due to test vs prod, or 2 tests.
