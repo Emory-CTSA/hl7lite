@@ -1,0 +1,462 @@
+{
+  "bed_wildcard_to_unit": {
+    "ED ??": "EJCH_ED",
+    "EDMOB??": "EJCH_ED",
+    "EMOB??": "EJCH_ED",
+    "ICU ??": "3S",
+    "IN??": "EJCH_NICU",
+    "NICMOB??": "EJCH_NICU",
+    "NICUSR": "EJCH_NICU",
+    "NICU??": "EJCH_NICU",
+    "JCPACU??": "EJCH_PACU",
+    "JCPISO??": "EJCH_PACU",
+    "ED??": "ESJH_ED",
+    "SJPACU??": "ESJH_PACU",
+    "EMS?": "EDH_ER",
+    "ER??01": "EDH_ER",
+    "2500??": "EDH_ICU",
+    "NICU21??": "EDH_NICU",
+    "NICU41??": "EDH_NICU",
+    "PA??01": "EDH_PACU",
+    "T4??": "EHNT4",
+    "T4??-01": "EHNT4",
+    "1160-??": "11SICU",
+    "3107-??": "31ICU",
+    "3108-??": "31ICU",
+    "4107-??": "41ICU",
+    "4108-??": "41ICU",
+    "7107-??": "71ICU",
+    "7108-??": "71ICU",
+    "PICU L1??": "PICU",
+    "N??": "EHED",
+    "WH-TEST": "TEST"
+  },
+  "unit_to_canonical": {
+    "POHA": [
+      "AGR",
+      "POHA"
+    ],
+    "1200": [
+      "EDH",
+      "DH1200"
+    ],
+    "2600": [
+      "EDH",
+      "DH2600"
+    ],
+    "DH2600": [
+      "EDH",
+      "DH2600"
+    ],
+    "CDU": [
+      "EDH",
+      "CDU"
+    ],
+    "CVL": [
+      "EDH",
+      "CVL"
+    ],
+    "DHDTEN": [
+      "EDH",
+      "DHDTEN"
+    ],
+    "DHENDO": [
+      "EDH",
+      "DHENDO"
+    ],
+    "DHPSY": [
+      "EDH",
+      "DHPSY"
+    ],
+    "EDH_ER": [
+      "EDH",
+      "EDH_ER"
+    ],
+    "EDH_ICU": [
+      "EDH",
+      "EDH_ICU"
+    ],
+    "EDH_NICU": [
+      "EDH",
+      "EDH_NICU"
+    ],
+    "EDH_PACU": [
+      "EDH",
+      "EDH_PACU"
+    ],
+    "OBA": [
+      "EDH",
+      "OBA"
+    ],
+    "OPAC": [
+      "EDH",
+      "OPAC"
+    ],
+    "PCI": [
+      "EDH",
+      "PCI"
+    ],
+    "H1PA": [
+      "EHH",
+      "H1PA"
+    ],
+    "HH2ICU": [
+      "EHH",
+      "HH2ICU"
+    ],
+    "HHER": [
+      "EHH",
+      "HHER"
+    ],
+    "HSTLAB": [
+      "EHH",
+      "HSTLAB"
+    ],
+    "3S": [
+      "EJCH",
+      "3S"
+    ],
+    "6E": [
+      "EJCH",
+      "6E"
+    ],
+    "EJCH_ED": [
+      "EJCH",
+      "EJCH_ED"
+    ],
+    "EJCH_NICU": [
+      "EJCH",
+      "EJCH_NICU"
+    ],
+    "EJCH_PACU": [
+      "EJCH",
+      "EJCH_PACU"
+    ],
+    "RAD": [
+      "EJCH",
+      "RAD"
+    ],
+    "ROCU_CDU": [
+      "EJCH",
+      "ROCU_CDU"
+    ],
+    "TEL": [
+      "EJCH",
+      "TEL"
+    ],
+    "EJCH-ANES-CART": [
+      "EJCH",
+      "EJCH-ANES-CART"
+    ],
+    "LTC": [
+      "ELTAC",
+      "LTC"
+    ],
+    "ANES": [
+      "ESJH",
+      "ANES"
+    ],
+    "ARU": [
+      "ESJH",
+      "ARU"
+    ],
+    "CCU": [
+      "ESJH",
+      "CCU"
+    ],
+    "CVICU": [
+      "ESJH",
+      "CVICU"
+    ],
+    "CVPODS": [
+      "ESJH",
+      "CVPODS"
+    ],
+    "ESJH_ED": [
+      "ESJH",
+      "ESJH_ED"
+    ],
+    "ESJH_PACU": [
+      "ESJH",
+      "ESJH_PACU"
+    ],
+    "GIDU": [
+      "ESJH",
+      "GIDU"
+    ],
+    "ICUE": [
+      "ESJH",
+      "ICUE"
+    ],
+    "ICUW": [
+      "ESJH",
+      "ICUW"
+    ],
+    "OR CVOR": [
+      "ESJH",
+      "OR CVOR"
+    ],
+    "PERF": [
+      "ESJH",
+      "PERF"
+    ],
+    "SPECIAL CT": [
+      "ESJH",
+      "SPECIAL CT"
+    ],
+    "SURGICAL": [
+      "ESJH",
+      "SURGICAL"
+    ],
+    "ESJH-ANES-CART": [
+      "ESJH",
+      "EJCH-ANES-CART"
+    ],
+    "ESJH-PERF-CART": [
+      "ESJH",
+      "EJCH-PERF-CART"
+    ],
+    "A6ICU": [
+      "EUH",
+      "A6ICU"
+    ],
+    "CT": [
+      "EUH",
+      "CT"
+    ],
+    "EHCOA": [
+      "EUH",
+      "EHCOA"
+    ],
+    "EHDIALM": [
+      "EUH",
+      "EHDIALM"
+    ],
+    "EHDIALT": [
+      "EUH",
+      "EHDIALT"
+    ],
+    "EUH ECHO": [
+      "EUH",
+      "EUH ECHO"
+    ],
+    "EHECHO": [
+      "EUH",
+      "EHECHO"
+    ],
+    "EHHG": [
+      "EUH",
+      "EHHG"
+    ],
+    "EHICC": [
+      "EUH",
+      "EHICC"
+    ],
+    "EHIR": [
+      "EUH",
+      "EHIR"
+    ],
+    "EUHIR": [
+      "EUH",
+      "EUHIR"
+    ],
+    "EHPACU": [
+      "EUH",
+      "EHPACU"
+    ],
+    "EHPOHA": [
+      "EUH",
+      "EHPOHA"
+    ],
+    "EHRADON": [
+      "EUH",
+      "EHRADON"
+    ],
+    "EHSCD": [
+      "EUH",
+      "EHSCD"
+    ],
+    "EHTPPCU": [
+      "EUH",
+      "EHTPPCU"
+    ],
+    "EHUS": [
+      "EUH",
+      "EHUS"
+    ],
+    "D2ICU": [
+      "EUH",
+      "EUH 2D ICU"
+    ],
+    "EUH 2D ICU": [
+      "EUH",
+      "EUH 2D ICU"
+    ],
+    "G2ICU": [
+      "EUH",
+      "EUH 2G NORTH ICU"
+    ],
+    "EHSG2": [
+      "EUH",
+      "EHSG2"
+    ],
+    "G3ICU": [
+      "EUH",
+      "EUH 3G ICU"
+    ],
+    "EHN4B": [
+      "EUH",
+      "EUH 4B NORTH"
+    ],
+    "G4ICU": [
+      "EUH",
+      "EUH 4G ICU"
+    ],
+    "4TN": [
+      "EUH",
+      "EUH 4T NORTH ICU"
+    ],
+    "EHNT4": [
+      "EUH",
+      "EUH 4T NORTH ICU"
+    ],
+    "E5ICU": [
+      "EUH",
+      "EUH 5E ICU"
+    ],
+    "G5ICU": [
+      "EUH",
+      "EUH 5G ICU"
+    ],
+    "EHNT5": [
+      "EUH",
+      "EUH 5T NORTH ICU"
+    ],
+    "EHST5": [
+      "EUH",
+      "EUH 5T SOUTH ICU"
+    ],
+    "G6ICU": [
+      "EUH",
+      "EUH 6G ICU"
+    ],
+    "EHED": [
+      "EUH",
+      "EUH EMERGENCY"
+    ],
+    "EUH-ANES-CART": [
+      "EUH",
+      "EUH-ANES-CART"
+    ],
+    "EUH-PERF-CART": [
+      "EUH",
+      "EUH-PERF-CART"
+    ],
+    "11SICU": [
+      "EUHM",
+      "11SICU"
+    ],
+    "31ICU": [
+      "EUHM",
+      "31ICU"
+    ],
+    "41ICU": [
+      "EUHM",
+      "41ICU"
+    ],
+    "71ICU": [
+      "EUHM",
+      "71ICU"
+    ],
+    "COA": [
+      "EUHM",
+      "COA"
+    ],
+    "MH11SDU": [
+      "EUHM",
+      "MH11SDU"
+    ],
+    "MHCDU": [
+      "EUHM",
+      "MHCDU"
+    ],
+    "MHCT": [
+      "EUHM",
+      "MHCT"
+    ],
+    "MHED": [
+      "EUHM",
+      "MHED"
+    ],
+    "MHIPAC": [
+      "EUHM",
+      "MHIPAC"
+    ],
+    "MHIR": [
+      "EUHM",
+      "MHIR"
+    ],
+    "MHLDPACU": [
+      "EUHM",
+      "MHLDPACU"
+    ],
+    "MHNICU": [
+      "EUHM",
+      "MHNICU"
+    ],
+    "MHOPAC": [
+      "EUHM",
+      "MHOPAC"
+    ],
+    "MHPPCA": [
+      "EUHM",
+      "MHPPCA"
+    ],
+    "PICU": [
+      "EUHM",
+      "PICU"
+    ],
+    "NLICU": [
+      "EUOSH",
+      "NLICU"
+    ],
+    "NLPACU": [
+      "EUOSH",
+      "NLPACU"
+    ],
+    "WMCOLO": [
+      "EWAM",
+      "WMCOLO"
+    ],
+    "WMICC": [
+      "EWAM",
+      "WMICC"
+    ],
+    "WMORIR": [
+      "EWAM",
+      "WMORIR"
+    ],
+    "WMPACU": [
+      "EWAM",
+      "WMPACU"
+    ],
+    "WMRADO": [
+      "EWAM",
+      "WMRADO"
+    ],
+    "WMUS": [
+      "EWAM",
+      "WMUS"
+    ],
+    "TEST": [
+      "TEST",
+      "TEST"
+    ]
+  },
+  "hospital_to_canonical": {
+    "Emory St Joseph's Hospital": "ESJH",
+    "Emory Johns Creek Hospital": "EJCH",
+    "ZHE2WPNECSLX010": "EUHM",
+    "10001": "EUH"
+  }
+}
