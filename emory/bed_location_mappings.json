@@ -20,6 +20,7 @@
     "PA??01": "EDH_PACU",
     "T4??": "EHNT4",
     "T4??-01": "EHNT4",
+    "B4??-01": "EHN4B",
     "1160-??": "11SICU",
     "3107-??": "31ICU",
     "3108-??": "31ICU",
@@ -298,7 +299,7 @@
     ],
     "EHSG2": [
       "EUH",
-      "EHSG2"
+      "EUH 2G SOUTH"
     ],
     "G3ICU": [
       "EUH",
@@ -457,6 +458,7 @@
     "Emory St Joseph's Hospital": "ESJH",
     "Emory Johns Creek Hospital": "EJCH",
     "ZHE2WPNECSLX010": "EUHM",
-    "10001": "EUH"
+    "10001": "EUH",
+    "10002": "EUHM"
   }
 }
