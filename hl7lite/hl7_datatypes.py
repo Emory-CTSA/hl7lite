@@ -134,18 +134,20 @@ def convert_field(data, datatype: DataType, immediate:bool = False):
     if data is None:
         raise ValueError(f"Cannot convert None to {datatype}")
     
-    elif datatype not in [DataType.INT, DataType.FLOAT, DataType.NUMERIC, DataType.DATETIME, 
-                          DataType.STR, DataType.STR_OR_LIST, DataType.LIST_OF_STR, 
-                          DataType.LIST_OF_INT, DataType.LIST_OF_FLOAT, DataType.LIST_OF_NUMERIC, DataType.ANY]:
+    if any(datatype == dt for dt in DataType.__dict__.values()):
+        pass
+    else:
         raise ValueError(f"Unsupported DataType {datatype} for data: {data}")
+    # elif datatype not in [DataType.INT, DataType.FLOAT, DataType.NUMERIC, DataType.DATETIME, 
+    #                       DataType.STR, DataType.STR_OR_LIST, DataType.LIST_OF_STR, 
+    #                       DataType.LIST_OF_INT, DataType.LIST_OF_FLOAT, DataType.LIST_OF_NUMERIC, DataType.ANY]:
+    #     raise ValueError(f"Unsupported DataType {datatype} for data: {data}")
 
     container_type = datatype[0][1]
     # element_type = datatype[0][2]
 
-    if isinstance(data, str):
-        datalen = len(data)
-        if datalen == 0:
-            return missing_values[container_type]
+    if isinstance(data, str) and len(data) == 0:
+        return missing_values[container_type]
     
     # ANY type mean no change.  e.g. OBX_5 which is obx value, and is converted previously.
     if datatype == DataType.ANY:
