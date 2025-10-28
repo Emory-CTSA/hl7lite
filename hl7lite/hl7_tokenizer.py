@@ -47,37 +47,48 @@ segment_separator = re.compile(r'\r\n|\n|\r')
 
 
 # doing the "in" check avoids calling split if the delimiter is not present.  this speeds things up significantly.
-def _component_to_subcomponents(component: str):
+def _component_to_subcomponents(component: str, level : int = 1000):
+    if level < 5:
+        return component
+    
     if SUBCOMPONENT_SEPARATOR not in component:
         return component
     else:
         return component.split(SUBCOMPONENT_SEPARATOR)
 
-def _repetition_to_components(field: str):
+def _repetition_to_components(field: str, level : int = 1000):
+    if level < 4:
+        return field
     
     if COMPONENT_SEPARATOR not in field:
-        return _component_to_subcomponents(field)
+        return _component_to_subcomponents(field, level = level)
     else:
         cs = field.split(COMPONENT_SEPARATOR)
-        return [_component_to_subcomponents(c) for c in cs]
+        return [_component_to_subcomponents(c, level = level) for c in cs]
     
-def _field_to_repetitions(field: str):
+def _field_to_repetitions(field: str, level : int = 1000):
+    if level < 3:
+        return field
+    
     if REPETITION_SEPARATOR not in field:
-        return _repetition_to_components(field)
+        return _repetition_to_components(field, level = level)
     else:
         fs = field.split(REPETITION_SEPARATOR)
-        return [_repetition_to_components(f) for f in fs]
+        return [_repetition_to_components(f, level = level) for f in fs]
 
 
 # parse 1 segment into fields
 # this function skips repetition and subcomponent tokenization if they are absent, else invoke the full tokenization chain.
-def _segment_to_fields(segment: str):
+def _segment_to_fields(segment: str, level : int = 1000):
     fields = segment.split(FIELD_SEPARATOR)
     
-    parsed_fields = [ field if field == MSH_2 else \
-            _field_to_repetitions(field) if ((REPETITION_SEPARATOR in field) or (SUBCOMPONENT_SEPARATOR in field)) else \
-            field.split(COMPONENT_SEPARATOR) if (COMPONENT_SEPARATOR in field) else field \
-            for field in fields ]
+    if level <= 2:
+        parsed_fields = fields
+    else:
+        parsed_fields = [ field if field == MSH_2 else \
+                _field_to_repetitions(field, level = level) if (level >= 3) and ((REPETITION_SEPARATOR in field) or (SUBCOMPONENT_SEPARATOR in field)) else \
+                field.split(COMPONENT_SEPARATOR) if (level >= 4) and (COMPONENT_SEPARATOR in field) else field \
+                for field in fields ]
     
     if parsed_fields[0].upper() == 'OBX':
         parsed_fields[5] = _convert_obx_value_type(data = parsed_fields[5], datatype = parsed_fields[2])
@@ -94,11 +105,13 @@ def _segment_to_fields(segment: str):
 #     return parsed
 
 # else, get the separators from global variables
-def tokenize_hl7_message(hl7_str: str):
+# levels:  1 = segment, 2 = fields (minimally done), 3 = repetitions, 4 = components, 5 = subcomponents.
+def tokenize_hl7_message(hl7_str: str, level : int = 1000):
     # perhaps a streaming parser would be best.
     # first split the message into segments
     parsed = []  # dict of segments, repeats are organized as a list.
     seg_names = set()
+    level = max(level, 2)
     
     # first segment should be MSH
     if not hl7_str.startswith("MSH"):
@@ -115,7 +128,7 @@ def tokenize_hl7_message(hl7_str: str):
     segments = hl7_str.replace('\n', '\r').split('\r')
     
     # batch parse segments version
-    parsed = [_segment_to_fields(segment) for segment in segments if segment.strip() != '']
+    parsed = [_segment_to_fields(segment, level = level) for segment in segments if segment.strip() != '']
     # parse a list of segment strings, return a list of lists, each list is 1 segment's fields
     seg_names = set([seg_fields[0].upper() for seg_fields in parsed])
 
