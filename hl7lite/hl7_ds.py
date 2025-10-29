@@ -286,7 +286,7 @@ class HL7Data:
             'end_t': missing_values[np.datetime64]
         }]
         
-    def _to_row_dicts(self, for_serialization=False):
+    def _to_row_dicts(self, for_serialization : bool = False):
         return []
         
     def to_row_dicts(self):
@@ -346,10 +346,10 @@ class HL7ORUData(HL7Data):
         return results
 
     # missing values set to '' for json serialization
-    def _to_row_dicts(self, for_serialization=False):
+    def _to_row_dicts(self, for_serialization : bool = False):
         outs = []
         common = {
-            'msh_time': self.msh_time if pd.notna(self.msh_time) else missing_values[str if for_serialization else np.datetime64],
+            'msh_time': self.msh_time if pd.notna(self.msh_time) else missing_values[str] if for_serialization else missing_values[np.datetime64],
             'msh_send_app': self.msh_send_app,
             'profile': self.msh_profile,
             'control_id': self.control_id,
@@ -367,8 +367,8 @@ class HL7ORUData(HL7Data):
             signal_common.update({
                 'src': signal.source2,
                 'msg_type': signal.type,
-                'start_t': signal.start_t if pd.notna(signal.start_t) else missing_values[str if for_serialization else np.datetime64],
-                'end_t': missing_values[str if for_serialization else np.datetime64],
+                'start_t': signal.start_t if pd.notna(signal.start_t) else missing_values[str] if for_serialization else missing_values[np.datetime64],
+                'end_t': missing_values[str] if for_serialization else missing_values[np.datetime64],
             })
             data = self._extract_from_signal(signal)
             
@@ -380,17 +380,24 @@ class HL7ORUData(HL7Data):
                     'channel': channel,
                     'id': channel_id,
                     'channel_type': channel_to_type.get(channel, 'other'),
-                    'obx_start_t': obx_start if pd.notna(obx_start) else missing_values[str if for_serialization else np.datetime64],
+                    'obx_start_t': obx_start if pd.notna(obx_start) else missing_values[str] if for_serialization else missing_values[np.datetime64],
                     'values': [values,] if type(values) is not list else values,  # parquet does not allow mixed types.
                     'value_type': valtype,  # not used.
                     'UoM': UoM,
                     'ref_range': ref_range,
                     
-                    'pd_samp_ms': missing_values[str if for_serialization else float],
+                    'pd_samp_ms': missing_values[str] if for_serialization else missing_values[float],
                     'nsamp': 1,
                 })
                 outs.append(out)
         return outs
+
+    def to_row_dicts(self):
+        return self._to_row_dicts(for_serialization=False)
+    
+    def to_row_json(self):
+        res = self._to_row_dicts(for_serialization=True)
+        return json.dumps(res) if len(res) > 0 else ''
 
 
 class HL7AlarmData(HL7ORUData):
@@ -451,10 +458,10 @@ class HL7WaveformData(HL7ORUData):
             
         return (channel, channel_id, obx_start, values, valtype, UoM, ref_range, samp_interval_ms, nsamples)
 
-    def _to_row_dicts(self, for_serialization=False):
+    def _to_row_dicts(self, for_serialization : bool = False):
         outs = []
         common = {
-            'msh_time': self.msh_time if pd.notna(self.msh_time) else missing_values[str if for_serialization else np.datetime64],
+            'msh_time': self.msh_time if pd.notna(self.msh_time) else missing_values[str] if for_serialization else missing_values[np.datetime64],
             'msh_send_app': self.msh_send_app,
             'profile': self.msh_profile,
             'control_id': self.control_id,
@@ -479,25 +486,31 @@ class HL7WaveformData(HL7ORUData):
             out.update({
                 'src': signal.source2,
                 'msg_type': signal.type,
-                'start_t': signal.start_t if pd.notna(signal.start_t) else missing_values[str if for_serialization else np.datetime64],
-                'end_t': signal.end_t if pd.notna(signal.end_t) else missing_values[str if for_serialization else np.datetime64],
+                'start_t': signal.start_t if pd.notna(signal.start_t) else missing_values[str] if for_serialization else missing_values[np.datetime64],
+                'end_t': signal.end_t if pd.notna(signal.end_t) else missing_values[str] if for_serialization else missing_values[np.datetime64],
                 
                 'channel': channel,
                 'id': channel_id,
                 'channel_type': channel_to_type.get(channel, 'other_waveform'),
-                'obx_start_t': obx_start if pd.notna(obx_start) else missing_values[str if for_serialization else np.datetime64],                
+                'obx_start_t': obx_start if pd.notna(obx_start) else missing_values[str] if for_serialization else missing_values[np.datetime64],
 
                 'values': values,
                 'value_type': valtype,
                 'UoM': UoM,
                 'ref_range': ref_range,
-                
-                'pd_samp_ms': samp_interval_ms if pd.notna(samp_interval_ms) else missing_values[str if for_serialization else float],
-                'nsamp': nsamples if pd.notna(nsamples) else missing_values[str if for_serialization else int],
+
+                'pd_samp_ms': samp_interval_ms if pd.notna(samp_interval_ms) else missing_values[str] if for_serialization else missing_values[float],
+                'nsamp': nsamples if pd.notna(nsamples) else missing_values[str] if for_serialization else missing_values[int],
             })
             outs.append(out)
         return outs
 
+    def to_row_dicts(self):
+        return self._to_row_dicts(for_serialization=False)
+    
+    def to_row_json(self):
+        res = self._to_row_dicts(for_serialization=True)
+        return json.dumps(res) if len(res) > 0 else ''
 
 HL7ECGData = HL7WaveformData
 
