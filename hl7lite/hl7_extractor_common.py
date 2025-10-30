@@ -261,7 +261,12 @@ def _extract_bed_id_euh(pv1_bed) -> tuple:
         
         if (bed_id.startswith('PICU L')):
             bed_unit = 'PICU'
-            bed_id = 'MHPICUL' + bed_id[len("PICU L"):]
+            if len(bed_id) - len("PICU L") == 2:
+                # PICU L10 -> MHPICUL110
+                bed_id = 'MHPICUL1' + bed_id[len("PICU L"):]
+            else:
+                bed_id = 'MHPICUL' + bed_id[len("PICU L"):]
+            
         elif (bed_id.startswith("4107") or bed_id.startswith("4108")):
             #4107-06 -> 4107-600
             #4108-01 -> 4108-100
