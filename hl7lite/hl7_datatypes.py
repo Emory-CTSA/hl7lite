@@ -41,16 +41,17 @@ missing_values = {
     (str, list): '',
 }
 
-hl7_field_to_pandas_type = {
-    ('msh', 2): DataType.STR,  # MSH.2 sending application
-    ('msh', 6): DataType.DATETIME,  # MSH.6 message date/time
-    ('msh', 9): DataType.STR_OR_LIST,  # MSH.9 message type
-    ('msh', 10): DataType.STR,  # MSH.10 production vs test
-    ('msh', 20): DataType.STR_OR_LIST,  # MSH.20 message profile
+hl7_field_to_pandas_type = {  # MSH.2 is the separators, so labeling is 1 more than actual list index.
+    ('msh', 2): DataType.STR,  # MSH.3 sending application
+    ('msh', 6): DataType.DATETIME,  # MSH.7 message date/time
+    ('msh', 8): DataType.STR_OR_LIST,  # MSH.9 message type
+    ('msh', 9): DataType.STR,  # MSH.10 control id
+    ('msh', 10): DataType.STR,  # MSH.11 production vs test
+    ('msh', 20): DataType.STR_OR_LIST,  # MSH.21 message profile
     ('pid', 3): DataType.STR_OR_LIST, # PID.3 patient identifier list
     ('pid', 5): DataType.STR_OR_LIST,  # PID.5 patient name
     ('pid', 18): DataType.STR_OR_LIST,  # PID.18 visit number /patient account.
-    ('pv1', 2): DataType.STR,  # PV1.3 assigned patient location
+    ('pv1', 2): DataType.STR,  # PV1.2 patient class
     ('pv1', 3): DataType.STR_OR_LIST,  # PV1.3 assigned patient location
     ('pv1', 19): DataType.STR,  # PV1.19 visit number
     ('obr', 3): DataType.LIST_OF_STR,  # OBR.3 src target?

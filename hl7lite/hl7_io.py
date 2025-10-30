@@ -126,8 +126,8 @@ def read_hl7_file(hl7_file: str, history_fn: str, current_fn: str, verify_messag
                                 # this is the patient info for this bed
                                 ddict['pid'] = pat_info['pid'] if ddict['pid'] == missing_values[str] else ddict['pid']
                                 ddict['visit_id'] = pat_info['visit_id'] if ddict['visit_id'] == missing_values[str] else ddict['visit_id']
-                                ddict['patient_first_name'] = pat_info['first_name'] if ddict['patient_first_name'] == missing_values[str] else ddict['patient_first_name']
-                                ddict['patient_last_name'] = pat_info['last_name'] if ddict['patient_last_name'] == missing_values[str] else ddict['patient_last_name']
+                                ddict['pat_fn'] = pat_info['first_name'] if ddict['pat_fn'] == missing_values[str] else ddict['pat_fn']
+                                ddict['pat_ln'] = pat_info['last_name'] if ddict['pat_ln'] == missing_values[str] else ddict['pat_ln']
                     # else no patient info, no change.
 
             data.extend(data_dict)

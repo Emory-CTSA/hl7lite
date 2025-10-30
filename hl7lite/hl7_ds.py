@@ -259,10 +259,10 @@ class Signal:
 class HL7Data:
     def __init__(self, message: HierarchicalMessage):
         self.orig_message = message
-        self.msh_time = get_with_default(message.msh, 'msh', 6)
-        self.msh_send_app = get_with_default(message.msh, 'msh', 2)
-        self.control_id = get_with_default(message.msh, 'msh', 10)
-        self.msh_type = get_with_default(message.msh, 'msh', 9)
+        self.msh_time = get_with_default(message.msh, 'msh', 6) #MSH.7
+        self.msh_send_app = get_with_default(message.msh, 'msh', 2) #MSH.3
+        self.control_id = get_with_default(message.msh, 'msh', 9)  # MSH.10
+        self.msh_type = get_with_default(message.msh, 'msh', 8) # MSH.9
         self.pid, self.pid_visit, self.pid_first_name, self.pid_last_name = extract_pid(message.pid, message.pv1)
         self.pid_middle_initial = missing_values[str]
         self.message_type = "Other"
@@ -287,8 +287,21 @@ class HL7Data:
         }]
         
     def _to_row_dicts(self, for_serialization : bool = False):
-        return []
-        
+        common = {
+            'msh_time': self.msh_time if pd.notna(self.msh_time) else missing_values[str] if for_serialization else missing_values[np.datetime64],
+            # 'msh_send_app': self.msh_send_app,
+            'profile': self.msh_profile,
+            'control_id': self.control_id,
+            'hospital': self.hospital,
+            'bed_unit': self.bed_unit,
+            'bed_id': self.bed_id,
+            'pid': self.pid,
+            'visit_id': self.pid_visit,
+            'pat_ln': self.pid_last_name,
+            'pat_fn': self.pid_first_name,
+        }
+        return [common,]
+    
     def to_row_dicts(self):
         return self._to_row_dicts(for_serialization=False)
     
@@ -348,20 +361,8 @@ class HL7ORUData(HL7Data):
     # missing values set to '' for json serialization
     def _to_row_dicts(self, for_serialization : bool = False):
         outs = []
-        common = {
-            'msh_time': self.msh_time if pd.notna(self.msh_time) else missing_values[str] if for_serialization else missing_values[np.datetime64],
-            'msh_send_app': self.msh_send_app,
-            'profile': self.msh_profile,
-            'control_id': self.control_id,
-            'hospital': self.hospital,
-            'bed_unit': self.bed_unit,
-            'bed_id': self.bed_id,
-            'pid': self.pid,
-            'visit_id': self.pid_visit,
-            'patient_last_name': self.pid_last_name,
-            'patient_first_name': self.pid_first_name,
-        }
-
+        common = HL7Data._to_row_dicts(self, for_serialization=for_serialization)[0]
+        
         for signal in self.signals:  # a signal is an OBR
             signal_common = common.copy()
             signal_common.update({
@@ -378,7 +379,7 @@ class HL7ORUData(HL7Data):
                 out = signal_common.copy()
                 out.update({
                     'channel': channel,
-                    'id': channel_id,
+                    'channel_id': channel_id,
                     'channel_type': channel_to_type.get(channel, 'other'),
                     'obx_start_t': obx_start if pd.notna(obx_start) else missing_values[str] if for_serialization else missing_values[np.datetime64],
                     'values': [values,] if type(values) is not list else values,  # parquet does not allow mixed types.
@@ -460,19 +461,8 @@ class HL7WaveformData(HL7ORUData):
 
     def _to_row_dicts(self, for_serialization : bool = False):
         outs = []
-        common = {
-            'msh_time': self.msh_time if pd.notna(self.msh_time) else missing_values[str] if for_serialization else missing_values[np.datetime64],
-            'msh_send_app': self.msh_send_app,
-            'profile': self.msh_profile,
-            'control_id': self.control_id,
-            'hospital': self.hospital,
-            'bed_unit': self.bed_unit,
-            'bed_id': self.bed_id,
-            'pid': self.pid,
-            'visit_id': self.pid_visit,
-            'patient_last_name': self.pid_last_name,
-            'patient_first_name': self.pid_first_name,
-        }
+        common = HL7Data._to_row_dicts(self, for_serialization=for_serialization)[0]
+        
         for signal in self.signals:
             # extract the waveform data from signal.
             (channel, channel_id, obx_start,
@@ -490,7 +480,7 @@ class HL7WaveformData(HL7ORUData):
                 'end_t': signal.end_t if pd.notna(signal.end_t) else missing_values[str] if for_serialization else missing_values[np.datetime64],
                 
                 'channel': channel,
-                'id': channel_id,
+                'channel_id': channel_id,
                 'channel_type': channel_to_type.get(channel, 'other_waveform'),
                 'obx_start_t': obx_start if pd.notna(obx_start) else missing_values[str] if for_serialization else missing_values[np.datetime64],
 
@@ -530,7 +520,8 @@ class HL7VitalsData(HL7ORUData):
             self.signals.append(Signal(obr))
             
     def get_pid_loc_mapping(self):
-        out = super().get_pid_loc_mapping()
+        out = HL7Data.get_pid_loc_mapping(self)
+        # adding additional PID info from OBX - there is only 1 OBR
         out.append({
             'hospital': self.hospital,
             'bed_unit': self.bed_unit,
