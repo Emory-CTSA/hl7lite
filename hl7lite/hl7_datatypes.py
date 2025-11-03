@@ -3,6 +3,8 @@ import numpy as np
 # from datetime import datetime, timedelta
 import re
 
+from zoneinfo import ZoneInfo
+
 # individually convert is slower than vectorized convert.
 # python's float() function wraps a C double and follows IEEE 754
 # so it can precisely represent integers up to +/- 2^53
@@ -111,12 +113,14 @@ def fix_time(time_str: str):
 def parse_time(time_strs):
     # if time_strs is a single string, need to convert from pd.Timestamp to datetime64
     if isinstance(time_strs, str):
-        if time_strs[-5] in ['-', '+']:
+        if time_strs[-5] in ['-', '+'] and ((len(time_strs) > 14) and (time_strs[14] == '.')):
             return pd.to_datetime(time_strs, format="%Y%m%d%H%M%S.%f%z", utc=True, errors='raise', exact=True).to_datetime64()
-        elif time_strs.rfind('.') > 0:
-            return pd.to_datetime(time_strs, format="%Y%m%d%H%M%S.%f", utc=False, errors='raise', exact=True).tz_localize('EST').tz_convert('UTC').to_datetime64()
+        elif time_strs[-5] in ['-', '+']:
+            return pd.to_datetime(time_strs, format="%Y%m%d%H%M%S%z", utc=True, errors='raise', exact=True).to_datetime64()
+        elif ((len(time_strs) > 14) and (time_strs[14] == '.')):
+            return pd.to_datetime(time_strs, format="%Y%m%d%H%M%S.%f", utc=False, errors='raise', exact=True).tz_localize(ZoneInfo("America/New_York")).tz_convert('UTC').to_datetime64()
         else:
-            return pd.to_datetime(time_strs, format="%Y%m%d%H%M%S", utc=False, errors='raise', exact=True).tz_localize('EST').tz_convert('UTC').to_datetime64()
+            return pd.to_datetime(time_strs, format="%Y%m%d%H%M%S", utc=False, errors='raise', exact=True).tz_localize(ZoneInfo("America/New_York")).tz_convert('UTC').to_datetime64()
     else:
         # if time_strs is from a series or list, datetime64 is returned already.
         return pd.to_datetime(time_strs, format="%Y%m%d%H%M%S.%f%z", utc=True, errors='raise', exact=True)
