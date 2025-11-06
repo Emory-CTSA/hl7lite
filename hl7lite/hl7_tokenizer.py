@@ -79,7 +79,7 @@ def _field_to_repetitions(field: str, level : int = 1000):
 
 # parse 1 segment into fields
 # this function skips repetition and subcomponent tokenization if they are absent, else invoke the full tokenization chain.
-def _segment_to_fields(segment: str, level : int = 1000):
+def _segment_to_fields(segment: str, level : int = 1000, convert_obx_values: bool = False):
     fields = segment.split(FIELD_SEPARATOR)
     
     if level <= 2:
@@ -90,7 +90,7 @@ def _segment_to_fields(segment: str, level : int = 1000):
                 field.split(COMPONENT_SEPARATOR) if (level >= 4) and (COMPONENT_SEPARATOR in field) else field \
                 for field in fields ]
     
-    if parsed_fields[0].upper() == 'OBX':
+    if (parsed_fields[0].upper() == 'OBX') and convert_obx_values:
         parsed_fields[5] = _convert_obx_value_type(data = parsed_fields[5], datatype = parsed_fields[2])
     return parsed_fields
 
@@ -106,7 +106,7 @@ def _segment_to_fields(segment: str, level : int = 1000):
 
 # else, get the separators from global variables
 # levels:  1 = segment, 2 = fields (minimally done), 3 = repetitions, 4 = components, 5 = subcomponents.
-def tokenize_hl7_message(hl7_str: str, level : int = 1000):
+def tokenize_hl7_message(hl7_str: str, level : int = 1000, convert_obx_values: bool = False):
     # perhaps a streaming parser would be best.
     # first split the message into segments
     parsed = []  # dict of segments, repeats are organized as a list.
@@ -128,7 +128,7 @@ def tokenize_hl7_message(hl7_str: str, level : int = 1000):
     segments = hl7_str.replace('\n', '\r').split('\r')
     
     # batch parse segments version
-    parsed = [_segment_to_fields(segment, level = level) for segment in segments if segment.strip() != '']
+    parsed = [_segment_to_fields(segment, level = level, convert_obx_values = convert_obx_values) for segment in segments if segment.strip() != '']
     # parse a list of segment strings, return a list of lists, each list is 1 segment's fields
     seg_names = set([seg_fields[0].upper() for seg_fields in parsed])
 

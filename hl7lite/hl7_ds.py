@@ -2,6 +2,7 @@ from hl7lite.hl7_datatypes import missing_values
 from hl7lite.hl7_tokenizer import get_with_default
 from hl7lite.hl7_extractor_common import extract_bed_id, extract_pid
 from hl7lite.hl7_extractor_obx import extract_signal_name, extract_signal_id, extract_signal_uom, extract_pid_from_obx
+from hl7lite.hl7_datatypes import parse_time
 import numpy as np
 import pandas as pd
 from hl7lite.hl7_waveform import channel_to_type
@@ -286,27 +287,38 @@ class HL7Data:
             'end_t': missing_values[np.datetime64]
         }]
         
-    def _to_row_dicts(self, for_serialization : bool = False):
+    def _get_time_repr(self, time_str: str, for_serialization : bool = False, time_as_epoch: bool = False):
+        if time_as_epoch:  # if we are returning the epoch, then need to convert.
+            return parse_time(time_str, as_epoch_sec=True) if pd.notna(time_str) else missing_values[float]
+        else:  # else return a string or datetime64 depending on whether this is for serialization.
+            return time_str if pd.notna(time_str) else (missing_values[str] if for_serialization else missing_values[np.datetime64])
+        
+    def _to_row_dicts(self, for_serialization : bool = False, time_as_epoch: bool = False):
         common = {
-            'msh_time': self.msh_time if pd.notna(self.msh_time) else (missing_values[str] if for_serialization else missing_values[np.datetime64]),
+            # msh_time is stored as string here. conversion to datetime is done in downstream processing.  if this is called for serialization, then return ""
+            'msh_time': self._get_time_repr(self.msh_time, for_serialization=for_serialization, time_as_epoch=time_as_epoch),
             # 'msh_send_app': self.msh_send_app,
             'profile': self.msh_profile,
             'control_id': self.control_id,
             'hospital': self.hospital,
             'bed_unit': self.bed_unit,
             'bed_id': self.bed_id,
-            'pid': self.pid,
-            'visit_id': self.pid_visit,
-            'pat_ln': self.pid_last_name,
-            'pat_fn': self.pid_first_name,
         }
+        if not for_serialization:
+            common.update({
+                'pid': self.pid,
+                'visit_id': self.pid_visit,
+                'first_name': self.pid_first_name,
+                'last_name': self.pid_last_name,
+                'middle_initial': self.pid_middle_initial,
+            })  
         return [common,]
     
-    def to_row_dicts(self):
-        return self._to_row_dicts(for_serialization=False)
+    def to_row_dicts(self, time_as_epoch: bool = False):
+        return self._to_row_dicts(for_serialization=False, time_as_epoch=time_as_epoch)
     
-    def to_row_json(self):
-        res = self._to_row_dicts(for_serialization=True)
+    def to_row_json(self, time_as_epoch: bool = False):
+        res = self._to_row_dicts(for_serialization=True, time_as_epoch=time_as_epoch)
         return json.dumps(res) if len(res) > 0 else ''
 
 
@@ -359,17 +371,17 @@ class HL7ORUData(HL7Data):
         return results
 
     # missing values set to '' for json serialization
-    def _to_row_dicts(self, for_serialization : bool = False):
+    def _to_row_dicts(self, for_serialization : bool = False, time_as_epoch: bool = False):
         outs = []
-        common = HL7Data._to_row_dicts(self, for_serialization=for_serialization)[0]
+        common = HL7Data._to_row_dicts(self, for_serialization=for_serialization, time_as_epoch=time_as_epoch)[0]
         
         for signal in self.signals:  # a signal is an OBR
             signal_common = common.copy()
             signal_common.update({
                 'src': signal.source2,
                 'msg_type': signal.type,
-                'start_t': signal.start_t if pd.notna(signal.start_t) else (missing_values[str] if for_serialization else missing_values[np.datetime64]),
-                'end_t': (missing_values[str] if for_serialization else missing_values[np.datetime64]),
+                'start_t': HL7Data._get_time_repr(self, signal.start_t, for_serialization=for_serialization, time_as_epoch=time_as_epoch),
+                'end_t': HL7Data._get_time_repr(self, signal.end_t, for_serialization=for_serialization, time_as_epoch=time_as_epoch),
             })
             data = self._extract_from_signal(signal)
             
@@ -381,7 +393,7 @@ class HL7ORUData(HL7Data):
                     'channel': channel,
                     'channel_id': channel_id,
                     'channel_type': channel_to_type.get(channel, 'other'),
-                    'obx_start_t': obx_start if pd.notna(obx_start) else (missing_values[str] if for_serialization else missing_values[np.datetime64]),
+                    'obx_start_t': HL7Data._get_time_repr(self, obx_start, for_serialization=for_serialization, time_as_epoch=time_as_epoch),
                     'values': [values,] if type(values) is not list else values,  # parquet does not allow mixed types.
                     'value_type': valtype,  # not used.
                     'UoM': UoM,
@@ -393,11 +405,11 @@ class HL7ORUData(HL7Data):
                 outs.append(out)
         return outs
 
-    def to_row_dicts(self):
-        return self._to_row_dicts(for_serialization=False)
+    def to_row_dicts(self, time_as_epoch: bool = False):
+        return self._to_row_dicts(for_serialization=False, time_as_epoch=time_as_epoch)
     
-    def to_row_json(self):
-        res = self._to_row_dicts(for_serialization=True)
+    def to_row_json(self, time_as_epoch: bool = False):
+        res = self._to_row_dicts(for_serialization=True, time_as_epoch=time_as_epoch)
         return json.dumps(res) if len(res) > 0 else ''
 
 
@@ -459,9 +471,9 @@ class HL7WaveformData(HL7ORUData):
             
         return (channel, channel_id, obx_start, values, valtype, UoM, ref_range, samp_interval_ms, nsamples)
 
-    def _to_row_dicts(self, for_serialization : bool = False):
+    def _to_row_dicts(self, for_serialization : bool = False, time_as_epoch: bool = False):
         outs = []
-        common = HL7Data._to_row_dicts(self, for_serialization=for_serialization)[0]
+        common = HL7Data._to_row_dicts(self, for_serialization=for_serialization, time_as_epoch=time_as_epoch)[0]
         
         for signal in self.signals:
             # extract the waveform data from signal.
@@ -476,14 +488,13 @@ class HL7WaveformData(HL7ORUData):
             out.update({
                 'src': signal.source2,
                 'msg_type': signal.type,
-                'start_t': signal.start_t if pd.notna(signal.start_t) else (missing_values[str] if for_serialization else missing_values[np.datetime64]),
-                'end_t': signal.end_t if pd.notna(signal.end_t) else (missing_values[str] if for_serialization else missing_values[np.datetime64]),
-                
+                'start_t': HL7Data._get_time_repr(self, signal.start_t, for_serialization=for_serialization, time_as_epoch=time_as_epoch),
+                'end_t': HL7Data._get_time_repr(self, signal.end_t, for_serialization=for_serialization, time_as_epoch=time_as_epoch),
+
                 'channel': channel,
                 'channel_id': channel_id,
                 'channel_type': channel_to_type.get(channel, 'other_waveform'),
-                'obx_start_t': obx_start if pd.notna(obx_start) else (missing_values[str] if for_serialization else missing_values[np.datetime64]),
-
+                'obx_start_t': HL7Data._get_time_repr(self, obx_start, for_serialization=for_serialization, time_as_epoch=time_as_epoch),
                 'values': values,
                 'value_type': valtype,
                 'UoM': UoM,
@@ -495,11 +506,11 @@ class HL7WaveformData(HL7ORUData):
             outs.append(out)
         return outs
 
-    def to_row_dicts(self):
-        return self._to_row_dicts(for_serialization=False)
+    def to_row_dicts(self, time_as_epoch: bool = False):
+        return self._to_row_dicts(for_serialization=False, time_as_epoch=time_as_epoch)
     
-    def to_row_json(self):
-        res = self._to_row_dicts(for_serialization=True)
+    def to_row_json(self, time_as_epoch: bool = False):
+        res = self._to_row_dicts(for_serialization=True, time_as_epoch=time_as_epoch)
         return json.dumps(res) if len(res) > 0 else ''
 
 HL7ECGData = HL7WaveformData
