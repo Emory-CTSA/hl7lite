@@ -266,6 +266,7 @@ class HL7Data:
         self.msh_type = get_with_default(message.msh, 'msh', 8) # MSH.9
         self.pid, self.pid_visit, self.pid_first_name, self.pid_last_name = extract_pid(message.pid, message.pv1)
         self.pid_middle_initial = missing_values[str]
+        self.msh_profile = get_with_default(message.msh, 'msh', 20)[0] if len(message.msh) > 20 else missing_values[str]
         self.message_type = "Other"
         
         # https://hl7.docs.careevolution.com/segments/pv1.html
@@ -299,6 +300,7 @@ class HL7Data:
             'msh_time': self._get_time_repr(self.msh_time, for_serialization=for_serialization, time_as_epoch=time_as_epoch),
             # 'msh_send_app': self.msh_send_app,
             'profile': self.msh_profile,
+            'hl7_type': self.msh_type,
             'control_id': self.control_id,
             'hospital': self.hospital,
             'bed_unit': self.bed_unit,
@@ -325,7 +327,6 @@ class HL7Data:
 class HL7ORUData(HL7Data):
     def __init__(self, message: HierarchicalMessage):
         super().__init__(message)
-        self.msh_profile = message.msh[20][0]
         self.signals = []
         for obr in message.obrs:
             # https://hl7.docs.careevolution.com/segments/obr.html
@@ -416,7 +417,6 @@ class HL7ORUData(HL7Data):
 class HL7AlarmData(HL7ORUData):
     def __init__(self, message: HierarchicalMessage):
         super().__init__(message)
-        self.msh_profile = '^'.join(message.msh[8])
         self.message_type = 'Alarm'
 
     def __repr__(self):
@@ -556,7 +556,6 @@ class HL7VitalsData(HL7ORUData):
 class HL7ADTData(HL7Data):
     def __init__(self, message: HierarchicalMessage):
         super().__init__(message)
-        self.msh_profile = '^'.join(message.msh[8])
         self.message_type = 'ADT'
         
     def __repr__(self):
@@ -565,8 +564,8 @@ class HL7ADTData(HL7Data):
 
 # dispatcher.
 def hl7_data_factory(omsg: HierarchicalMessage):
-    msh_profile = omsg.msh[8][0]   # MSH_9
-    if msh_profile == "ORU":
+    hl7_type = omsg.msh[8][0]   # MSH_9
+    if hl7_type == "ORU":
         # get the first OBR to determine type
         obr = omsg.obrs[0]['obr']
         obr_type = get_with_default(obr, 'obr', 4)[0]
@@ -579,8 +578,8 @@ def hl7_data_factory(omsg: HierarchicalMessage):
         else:
             raise ValueError(f"[ERROR] skipping unknown OBR type {obr_type}.")
         
-    elif msh_profile == "ADT":
+    elif hl7_type == "ADT":
         return HL7ADTData(omsg)
     else:
-        raise ValueError(f"[ERROR] skipping unknown message type {msh_profile}.")
+        raise ValueError(f"[ERROR] skipping unknown message type {hl7_type}.")
         

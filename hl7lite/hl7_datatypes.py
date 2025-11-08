@@ -5,6 +5,8 @@ import re
 
 from zoneinfo import ZoneInfo
 
+from hl7lite.parse_time_tz import c_parse_time, c_parse_time_batch
+
 # individually convert is slower than vectorized convert.
 # python's float() function wraps a C double and follows IEEE 754
 # so it can precisely represent integers up to +/- 2^53
@@ -110,24 +112,33 @@ def fix_time(time_str: str):
         
     return time_str
 
+# return int64, down to nanosecond precision, representing epoch seconds or datetime64
 def parse_time(time_strs, as_epoch_sec: bool = False):
     # if time_strs is a single string, need to convert from pd.Timestamp to datetime64
     if isinstance(time_strs, str):
-        out = None
-        if time_strs[-5] in ['-', '+'] and ((len(time_strs) > 14) and (time_strs[14] == '.')):
-            out = pd.to_datetime(time_strs, format="%Y%m%d%H%M%S.%f%z", utc=True, errors='raise', exact=True).to_datetime64()
-        elif time_strs[-5] in ['-', '+']:
-            out = pd.to_datetime(time_strs, format="%Y%m%d%H%M%S%z", utc=True, errors='raise', exact=True).to_datetime64()
-        elif ((len(time_strs) > 14) and (time_strs[14] == '.')):
-            out = pd.to_datetime(time_strs, format="%Y%m%d%H%M%S.%f", utc=False, errors='raise', exact=True).tz_localize(ZoneInfo("America/New_York")).tz_convert('UTC').to_datetime64()
-        else:
-            out = pd.to_datetime(time_strs, format="%Y%m%d%H%M%S", utc=False, errors='raise', exact=True).tz_localize(ZoneInfo("America/New_York")).tz_convert('UTC').to_datetime64()
-        return out.astype('int64') / 10**9 if as_epoch_sec else out
+        try:
+            out = None
+            if time_strs[-5] in ['-', '+'] and ((len(time_strs) > 14) and (time_strs[14] == '.')):
+                out = pd.to_datetime(time_strs, format="%Y%m%d%H%M%S.%f%z", utc=True, errors='raise', exact=True).to_datetime64()
+            elif time_strs[-5] in ['-', '+']:
+                out = pd.to_datetime(time_strs, format="%Y%m%d%H%M%S%z", utc=True, errors='raise', exact=True).to_datetime64()
+            elif ((len(time_strs) > 14) and (time_strs[14] == '.')):
+                out = pd.to_datetime(time_strs, format="%Y%m%d%H%M%S.%f", utc=False, errors='raise', exact=True).tz_localize(ZoneInfo("America/New_York")).tz_convert('UTC').to_datetime64()
+            else:
+                out = pd.to_datetime(time_strs, format="%Y%m%d%H%M%S", utc=False, errors='raise', exact=True).tz_localize(ZoneInfo("America/New_York")).tz_convert('UTC').to_datetime64()
+            return out.astype('int64') / 10**9 if as_epoch_sec else out
+        except Exception as e:
+            raise ValueError(f"Error parsing time string '{time_strs}': {e}") from e
     else:
         # if time_strs is from a series or list, datetime64 is returned already.
         out = pd.to_datetime(time_strs, format="%Y%m%d%H%M%S.%f%z", utc=True, errors='raise', exact=True)
         return out.astype('int64') / 10**9 if as_epoch_sec else out
         
+def parse_time_fast(time_strs, as_epoch_sec: bool = False):
+    if isinstance(time_strs, str):
+        return c_parse_time(time_strs, as_epoch_sec=as_epoch_sec)
+    else:
+        return c_parse_time_batch(time_strs, as_epoch_sec=as_epoch_sec)
 
 
 float_re = re.compile(r"^[-+]?((\d+\.*\d*)|(\.\d+))$") 

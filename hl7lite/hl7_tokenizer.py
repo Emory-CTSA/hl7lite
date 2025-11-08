@@ -90,8 +90,13 @@ def _segment_to_fields(segment: str, level : int = 1000, convert_obx_values: boo
                 field.split(COMPONENT_SEPARATOR) if (level >= 4) and (COMPONENT_SEPARATOR in field) else field \
                 for field in fields ]
     
-    if (parsed_fields[0].upper() == 'OBX') and convert_obx_values:
-        parsed_fields[5] = _convert_obx_value_type(data = parsed_fields[5], datatype = parsed_fields[2])
+    if (parsed_fields[0].upper() == 'OBX'):
+        if convert_obx_values:
+            parsed_fields[5] = _convert_obx_value_type(data = parsed_fields[5], datatype = parsed_fields[2])
+        elif not isinstance(parsed_fields[5], list):
+            # make sure OBX5 is always a list if not converting.
+            parsed_fields[5] = [parsed_fields[5],]
+
     return parsed_fields
 
 # # UNUSED
