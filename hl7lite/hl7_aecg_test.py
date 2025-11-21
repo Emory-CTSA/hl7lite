@@ -126,7 +126,7 @@ def _verify_hl7_msg(msg: HL7ECGData, check_start_times: bool = False, verbose:bo
         for key, obx in signal.attributes.items():
             # all_envs.append(obx['control_id'])
             # env_vs_obx.append(signal.env == obx['control_id'])
-            obx_time = obx['obs_time']
+            obx_time = obx['obx_time']
             obx_times.add(obx_time)
             all_obx_times.append(obx_time)
             time_vs_obx.append(signal.start_t == obx_time)

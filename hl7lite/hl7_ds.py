@@ -160,8 +160,8 @@ class Signal:
         # self.id = get_with_default(obr_field_list, 1, 'int')
         
         # get time - OBR.7 and OBR.8 - Observation Date/Time and Observation End Date/Time
-        self.start_t = get_with_default(obr_field_list, 'obr', 7)
-        self.end_t = get_with_default(obr_field_list, 'obr', 8)
+        self.start_t = get_with_default(obr_field_list, 'obr', 7, as_string = True)
+        self.end_t = get_with_default(obr_field_list, 'obr', 8, as_string = True)
         
         # get location:  OBR.10 collector identifier
         self.bed = get_with_default(obr_field_list, 'obr', 10)
@@ -176,7 +176,7 @@ class Signal:
         for obx_fields in obr['obx']:
             #https://hl7.docs.careevolution.com/segments/obx.html
             valtype = get_with_default(obx_fields, 'obx', 2)  #  OBX.2
-            obx_time = get_with_default(obx_fields, 'obx', 14)  # OBX.14 Date/Time of the Observation
+            obx_time = get_with_default(obx_fields, 'obx', 14, as_string=True)  # OBX.14 Date/Time of the Observation
 
             (obx_name, code) = extract_signal_name(obx_fields)  # OBX.3 observation identifier
             channel_id = extract_signal_id(obx_fields)
@@ -198,7 +198,7 @@ class Signal:
                                          'type': obx_name, 
                                          'code': code,
                                          'channel_id': channel_id, 
-                                         'obs_time': obx_time, 
+                                         'obx_time': obx_time, 
                                          'UoM' : unit_of_meas, 
                                          'value': data,
                                          'ref_range': ref_range,
@@ -207,7 +207,7 @@ class Signal:
     def __repr__(self):
         attrs = []
         for key, value in self.attributes.items():
-            obxstr = f"{key}:: valtype: {value['valtype']} type: {value['type']}, code: {value['code']}, chan_id: {value['channel_id']} unit:{value['UoM']} time:{value['obs_time']}"
+            obxstr = f"{key}:: valtype: {value['valtype']} type: {value['type']}, code: {value['code']}, chan_id: {value['channel_id']} unit:{value['UoM']} time:{value['obx_time']}"
             
             if isinstance(value['value'], list) and (len(value['value']) > 5):
                 obxstr += f"{len(value['value'])} value {value['value'][:5]}..."
@@ -260,9 +260,10 @@ class Signal:
 class HL7Data:
     def __init__(self, message: HierarchicalMessage):
         self.orig_message = message
-        self.msh_time = get_with_default(message.msh, 'msh', 6) #MSH.7
+        self.msh_time = get_with_default(message.msh, 'msh', 6, as_string=True) #MSH.7
         self.msh_send_app = get_with_default(message.msh, 'msh', 2) #MSH.3
         self.control_id = get_with_default(message.msh, 'msh', 9)  # MSH.10
+        self.deployment = get_with_default(message.msh, 'msh', 10)  # MSH.11
         self.msh_type = get_with_default(message.msh, 'msh', 8) # MSH.9
         self.pid, self.pid_visit, self.pid_first_name, self.pid_last_name = extract_pid(message.pid, message.pv1)
         self.pid_middle_initial = missing_values[str]
@@ -284,16 +285,19 @@ class HL7Data:
             'first_name': self.pid_first_name,
             'last_name': self.pid_last_name,
             'middle_initial': self.pid_middle_initial,
-            'start_t': self.msh_time,
-            'end_t': missing_values[np.datetime64]
+            'start_t': self._get_time_repr(self.msh_time, for_serialization=False, time_as_epoch=True),
+            'end_t': missing_values[int],
         }]
         
     def _get_time_repr(self, time_str: str, for_serialization : bool = False, time_as_epoch: bool = False):
-        if time_as_epoch:  # if we are returning the epoch, then need to convert.
-            return parse_time(time_str, as_epoch_sec=True) if pd.notna(time_str) else missing_values[float]
-        else:  # else return a string or datetime64 depending on whether this is for serialization.
-            return time_str if pd.notna(time_str) else (missing_values[str] if for_serialization else missing_values[np.datetime64])
-        
+        if pd.notna(time_str) and (time_str.strip() != missing_values[str]):
+            res = parse_time(time_str, as_epoch_ns=time_as_epoch)
+        elif time_as_epoch:
+            res = missing_values[int]
+        else:
+            res = missing_values[str] if for_serialization else missing_values[np.datetime64]
+        return res
+
     def _to_row_dicts(self, for_serialization : bool = False, time_as_epoch: bool = False):
         common = {
             # msh_time is stored as string here. conversion to datetime is done in downstream processing.  if this is called for serialization, then return ""
@@ -302,6 +306,7 @@ class HL7Data:
             'profile': self.msh_profile,
             'hl7_type': self.msh_type,
             'control_id': self.control_id,
+            'deployment': self.deployment,
             'hospital': self.hospital,
             'bed_unit': self.bed_unit,
             'bed_id': self.bed_id,
@@ -362,7 +367,7 @@ class HL7ORUData(HL7Data):
             valtype = obx['valtype']
             UoM = obx['UoM']
             ref_range = obx['ref_range']
-            obx_start = obx['obs_time']
+            obx_start = obx['obx_time']
             sample_interval_ms = missing_values[float]
 
             nsamples = 1
@@ -395,12 +400,12 @@ class HL7ORUData(HL7Data):
                     'channel_id': channel_id,
                     'channel_type': channel_to_type.get(channel, 'other'),
                     'obx_start_t': HL7Data._get_time_repr(self, obx_start, for_serialization=for_serialization, time_as_epoch=time_as_epoch),
-                    'values': [values,] if type(values) is not list else values,  # parquet does not allow mixed types.
+                    'values': values if type(values) is list else [values,],  # parquet does not allow mixed types.
                     'value_type': valtype,  # not used.
                     'UoM': UoM,
                     'ref_range': ref_range,
                     
-                    'pd_samp_ms': (missing_values[str] if for_serialization else missing_values[float]),
+                    'pd_samp_ms': missing_values[float],
                     'nsamp': 1,
                 })
                 outs.append(out)
@@ -459,7 +464,7 @@ class HL7WaveformData(HL7ORUData):
                 UoM = obx['UoM']
                 ref_range = obx['ref_range']
 
-                obx_start = obx['obs_time']
+                obx_start = obx['obx_time']
             elif "TIME_PD_SAMP" in name:
                 # type convert handled by hl7 parser
                 samp_interval_ms = obx['value'] if obx['value'] != missing_values[str] else missing_values[float]
@@ -495,13 +500,13 @@ class HL7WaveformData(HL7ORUData):
                 'channel_id': channel_id,
                 'channel_type': channel_to_type.get(channel, 'other_waveform'),
                 'obx_start_t': HL7Data._get_time_repr(self, obx_start, for_serialization=for_serialization, time_as_epoch=time_as_epoch),
-                'values': values,
+                'values': values if type(values) is list else [values,],  # parquet does not allow mixed types
                 'value_type': valtype,
                 'UoM': UoM,
                 'ref_range': ref_range,
 
-                'pd_samp_ms': samp_interval_ms if pd.notna(samp_interval_ms) else (missing_values[str] if for_serialization else missing_values[float]),
-                'nsamp': nsamples if pd.notna(nsamples) else (missing_values[str] if for_serialization else missing_values[int]),
+                'pd_samp_ms': samp_interval_ms if pd.notna(samp_interval_ms) else missing_values[float],
+                'nsamp': nsamples if pd.notna(nsamples) else 1,
             })
             outs.append(out)
         return outs
@@ -542,8 +547,8 @@ class HL7VitalsData(HL7ORUData):
             'first_name': self.pid_first_name2,
             'last_name': self.pid_last_name2,
             'middle_initial': self.pid_middle_initial2,
-            'start_t': self.pid_time2,
-            'end_t': missing_values[np.datetime64]
+            'start_t': self._get_time_repr(self.pid_time2, for_serialization=False, time_as_epoch=True),
+            'end_t': missing_values[int],
         })
         return out
             

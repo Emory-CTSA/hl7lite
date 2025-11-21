@@ -178,7 +178,7 @@ def extract_pid_from_obx(obr_fields: list, obxes: list) -> list:
     # read from patient name to bed mapping file, with timestamps
 
     source = get_with_default(obr_fields, 'obr', 21)
-    start_t = get_with_default(obr_fields, 'obr', 7)
+    start_t = get_with_default(obr_fields, 'obr', 7, as_string=True)
     first_name = missing_values[str]
     last_name = missing_values[str]
     pid = missing_values[str]

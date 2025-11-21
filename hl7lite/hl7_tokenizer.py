@@ -27,7 +27,7 @@ def _convert_obx_value_type(data, datatype:str):
     output_type = hl7_type_to_pandas_type.get(datatype, DataType.STR)
     
     try:
-        return convert_field(data, output_type, immediate = True)
+        return convert_field(data, output_type, as_string = False)
     except Exception as e:
         raise ValueError(f"[ERROR] converting {data} to datatype {datatype} ({output_type}): {e}")
 
@@ -93,9 +93,10 @@ def _segment_to_fields(segment: str, level : int = 1000, convert_obx_values: boo
     if (parsed_fields[0].upper() == 'OBX'):
         if convert_obx_values:
             parsed_fields[5] = _convert_obx_value_type(data = parsed_fields[5], datatype = parsed_fields[2])
-        elif not isinstance(parsed_fields[5], list):
-            # make sure OBX5 is always a list if not converting.
-            parsed_fields[5] = [parsed_fields[5],]
+        # elif not isinstance(parsed_fields[5], list):
+        #     # make sure OBX5 is always a list if not converting.
+        #     parsed_fields[5] = [parsed_fields[5],]
+        #     only convert it to list if it truly needs to be. e.g. pd_samp_ms is parsed as an attribute not a value.
 
     return parsed_fields
 
@@ -141,7 +142,7 @@ def tokenize_hl7_message(hl7_str: str, level : int = 1000, convert_obx_values: b
     
     return parsed, seg_names
 
-def get_with_default(elements: list, seg_name: str, index: int):
+def get_with_default(elements: list, seg_name: str, index: int, as_string: bool = True):
     """
     Get the value from the segment at the given index.
     If the index is out of range, return None.
@@ -157,8 +158,8 @@ def get_with_default(elements: list, seg_name: str, index: int):
     if out_data is None:
         raise ValueError(f"ERROR: out_data is None for segment {elements}, index {index}. should be at least an empty string or [].")
 
-    return convert_field(out_data, out_type)
-
+    # have to call this - in case we are dealing with nested lists and also to fix datetime strings.
+    return convert_field(out_data, out_type, as_string = as_string)
 
 
 #%%

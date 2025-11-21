@@ -81,12 +81,12 @@ def _c_parse_time_as_epoch_ns(str ts, str timezone = default_tz):
     return epoch
 
 
-def c_parse_time(str time_str, bint as_epoch_sec=False):
+def c_parse_time(str time_str, bint as_epoch_ns=False):
     cdef time_t epoch = _c_parse_time_as_epoch_ns(time_str)
-    return epoch / 1000000000.0 if as_epoch_sec else np.datetime64(epoch, 'ns' )
+    return epoch if as_epoch_ns else np.datetime64(epoch, 'ns' )
 
 # ✅ Batch parser
-def c_parse_time_batch(list time_strs, bint as_epoch_sec=False):
+def c_parse_time_batch(list time_strs, bint as_epoch_ns=False):
     cdef time_t epoch
     cdef int i
     cdef int n = len(time_strs)
@@ -100,4 +100,4 @@ def c_parse_time_batch(list time_strs, bint as_epoch_sec=False):
 
         result[i] = epoch
 
-    return result / 1000000000.0 if as_epoch_sec else result.astype("datetime64[ns]")
+    return result if as_epoch_ns else result.astype("datetime64[ns]")
