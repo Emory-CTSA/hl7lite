@@ -225,6 +225,7 @@ def _extract_bed_id_sjjc(pv1_bed) -> tuple:
     # two forms.  one with Hospital in the 4th position, one without
     if pv1_bed[3].endswith('Hospital'):
         #ICU^^ICU 7^Emory Johns Creek Hospital
+        #ED^^EDH2^Emory St Joseph's Hospital
         #PV1||I|ARU^^ARU5^Emory St Joseph's Hospital|
         hospital = pv1_bed[3]        
         bed_unit = pv1_bed[0]
@@ -234,6 +235,8 @@ def _extract_bed_id_sjjc(pv1_bed) -> tuple:
                 bed_id = 'JC' + bed_id
             elif hospital == 'Emory St Joseph\'s Hospital':
                 bed_id = 'SJ' + bed_id
+        elif (bed_unit == 'ED'):
+            bed_unit = _lookup_unit_from_bed(bed_id, '_'.join([hospital, bed_unit]))
     elif pv1_bed[0].startswith('100'):
         # ['10001021', 'EUH B462', 'B462-01', '10001']
         # ['10001029', 'EUH ED 21', '21', '10001']
