@@ -3,7 +3,7 @@ import os
 import logging
 log = logging.getLogger(__name__)
 
-def get_file_list(hl7_dir:str):
+def get_file_list(hl7_dir:str, extension: str = '.hl7'):
     log.info(f"scanning directory {hl7_dir}")
     hl7_files = {}
     # get the file list:  
@@ -26,7 +26,7 @@ def get_file_list(hl7_dir:str):
                 bed_id = "_".join(tokens[0:3])
         
         for f in files:
-            if f.endswith('.hl7'):
+            if f.endswith(extension):
                 # include this file
                 if bed_id not in hl7_files:
                     hl7_files[bed_id] = []
