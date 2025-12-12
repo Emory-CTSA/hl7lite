@@ -358,3 +358,10 @@ def convert_column(data: pd.Series, datatype: DataType):
         
 
 # check '', 'unknown', 'missing', 'null', 'nan' as missing values 
+
+def _convert_to_datetime_if_needed(col_data: pd.Series):
+    if col_data.dtype == float or col_data.dtype == 'float64':
+        return pd.to_datetime(col_data, unit='s')
+    elif np.issubdtype(col_data.dtype, np.integer):
+        return pd.to_datetime(col_data, unit='ns')
+    return col_data
