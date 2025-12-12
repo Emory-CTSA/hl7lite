@@ -24,6 +24,9 @@ def get_file_list(hl7_dir:str, extension: str = '.hl7'):
             elif len(tokens) == 7:
                 # HOSP/Unit/Bed/YYYY/MM/DD/hh
                 bed_id = "_".join(tokens[0:3])
+            elif len(tokens) == 9:
+                # P/HOSP/Unit/Bed/src/YYYY/MM/DD/hh
+                bed_id = "_".join(tokens[1:4])
         
         for f in files:
             if f.endswith(extension):
