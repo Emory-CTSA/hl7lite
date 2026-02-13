@@ -1,3 +1,15 @@
+# NOTE:
+created from the repo `https://github.com/Emory-CTSA/waveform_streaming#` using `git filter-repo`:
+
+```
+git filter-repo --path hl7lite/ --path emory/ --path io_utils/ --path LICENSE --path README.md --path requirements.txt --path setup.py --force
+```
+
+
+
+# Below is to be cleaned up.
+
+
 # waveform_streaming
 streaming data feed QC and wfdb conversion from Phillips Capsule
 
