@@ -1,0 +1,49 @@
+[build-system]
+requires = ["setuptools>=61", "Cython>=3.0", "numpy"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hl7lite"
+version = "0.1.0"
+description = "HL7 v2 message processing and conversion for healthcare waveform streaming data"
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.8"
+keywords = ["hl7", "healthcare", "waveform", "medical", "ecg"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Healthcare Industry",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Medical Science Apps.",
+]
+dependencies = [
+    "pandas>=2.0",
+    "numpy>=1.20",
+    "wfdb>=4.0",
+    "fastparquet>=2024.0",
+    "matplotlib>=3.5",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "Cython>=3.0",
+]
+
+[tool.setuptools.packages.find]
+include = ["hl7lite*", "io_utils*", "emory*"]
+
+[tool.setuptools.package-data]
+"hl7lite" = ["*.pyx", "*.pxd"]
+"emory" = ["*.json"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-v"

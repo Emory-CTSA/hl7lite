@@ -1,0 +1,50 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+
+# Cython build artifacts
+*.so
+*.c
+*.cpp
+build/
+dist/
+*.egg-info/
+*.egg
+
+# Distribution / packaging
+.eggs/
+wheels/
+sdist/
+MANIFEST
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Project-specific: compiled Cython extensions (built in-place)
+hl7lite/parse_time_tz.*.so
+hl7lite/sanitize_unicode.*.so

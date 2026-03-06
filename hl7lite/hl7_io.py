@@ -368,5 +368,5 @@ def convert_msg_to_json(msg: str) -> str:
     except ValueError as e:
         raise ValueError(f"[ERROR] could not create data message from HL7 message type {omsg.msh[8]}") from e
     
-    return data_msg.to_row_json()
+    return data_msg.to_row_json(time_as_epoch=True)
         
