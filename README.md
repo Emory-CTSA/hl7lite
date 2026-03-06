@@ -6,6 +6,17 @@ git filter-repo --path hl7lite/ --path emory/ --path io_utils/ --path LICENSE --
 ```
 
 
+# Building with Cython
+
+To add a cython function, system build tools including gcc and g++ will need to be installed, as are 
+python setuptools, wheel, and Cython.  Also update the setup.py file to include the package and the file name.
+
+
+```
+python setup.py build_ext --inplace
+```
+
+
 
 # Below is to be cleaned up.
 
