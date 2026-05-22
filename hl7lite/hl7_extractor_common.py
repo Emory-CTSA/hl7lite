@@ -9,7 +9,8 @@ log = logging.getLogger(__name__)
 
 #%%
 
-with open("emory/bed_location_mappings.json", "r") as f:
+import importlib.resources as _importlib_resources
+with _importlib_resources.open_text("emory", "bed_location_mappings.json") as f:
     all_bed_location_mappings = json.load(f)
     _bed_wildcard_to_unit = all_bed_location_mappings["bed_wildcard_to_unit"]
     _unit_to_canonical = all_bed_location_mappings["unit_to_canonical"]
