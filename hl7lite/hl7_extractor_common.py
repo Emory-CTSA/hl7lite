@@ -104,6 +104,14 @@ euh_bed_re = re.compile(r'^[A-Z]\d{3}$')
 def _canonicalize_bed_id_euh(bed_unit: str, bed_id: str) -> str:
     return (bed_id + '-01') if euh_bed_re.match(bed_id) else bed_id
 
+sj_bed_re = re.compile(r'[A-Z]+(\d{3})$')
+def _canonicalize_bed_id_sj(bed_unit: str, bed_id: str) -> str:
+    if (bed_id[:2] == "CV" or bed_id[:3] == "ICU") and bed_id[3] != ' ' and bed_id[-3] != "-":
+        match = sj_bed_re.search(bed_id)
+        return (match.group(1) if match else bed_id) + "-01"
+    else:
+        return bed_id
+    
 # cases:
 #   xxxx??, xxxx-??
 #   T4??, t4??-01
@@ -114,6 +122,7 @@ def _canonicalize_bed_id_euh(bed_unit: str, bed_id: str) -> str:
 sub_re = re.compile(r'\d{1,2}$')  # trailing 1 or 2 digits
 # replace 
 EJCHNICUsub_re = re.compile(r'\d[A-Za-z]$') # trailing digit and letter
+EJCHNICUsub2_re = re.compile(r'\d{2}$') # trailing digits
 EUHmatch_re = re.compile(r'^([A-Za-z]\d)\d{2}(-01)?$')  # T4??-01 or T4??
 EDHmatch_re = re.compile(r'^([A-Za-z]+)\d{2}(-?)01$')  # PA??01 or ER??01
 def _bed_id_to_wildcard(bed_id: str) -> str:
@@ -122,19 +131,22 @@ def _bed_id_to_wildcard(bed_id: str) -> str:
     if first2 in ['ER', 'PA']:
         match = EDHmatch_re.match(bed_id)
         if not match:
-            raise ValueError(f"Expected match for special bed prefix {bed_id} in unit {unit_name}")
+            raise ValueError(f"Expected match for special bed prefix {bed_id} ")
         output = match.group(1) + '??' + (match.group(2) if match.group(2) else '') + '01'
     elif (len(bed_id) >= 4) and bed_id[0].isalpha() and bed_id[1].isdigit():
         # include "T434" but exclude "N28"
         match = EUHmatch_re.match(bed_id)
         if not match:
-            raise ValueError(f"Expected match for special bed prefix {bed_id} in unit {unit_name}")
+            raise ValueError(f"Expected match for special bed prefix {bed_id} ")
         output = match.group(1) + '??' + (match.group(2) if match.group(2) else '')
     elif bed_id.startswith('EMS'):
         output = 'EMS?'
-    elif bed_id.startswith('NICU') and (bed_id[-1] in ['A', 'B']):
+    elif bed_id.startswith('NICU') and (bed_id[-1] in ['A', 'B']) :
         # replace the last digit and letter.
         output = EJCHNICUsub_re.sub('??', bed_id)
+    elif bed_id.startswith('NICU') and (bed_id[-3:] in ['-01', '-02']):
+        # replace the last 3 characters.
+        output = EJCHNICUsub2_re.sub('??', bed_id)
     else:
         # replace the final 2 char.
         output = sub_re.sub('??', bed_id)
@@ -227,6 +239,7 @@ def _extract_bed_id_sjjc(pv1_bed) -> tuple:
         #ICU^^ICU 7^Emory Johns Creek Hospital
         #ED^^EDH2^Emory St Joseph's Hospital
         #PV1||I|ARU^^ARU5^Emory St Joseph's Hospital|
+        #ICUW^^ICU231^Emory St Joseph's Hospital
         hospital = pv1_bed[3]        
         bed_unit = pv1_bed[0]
         bed_id = pv1_bed[2]
@@ -237,12 +250,18 @@ def _extract_bed_id_sjjc(pv1_bed) -> tuple:
                 bed_id = 'SJ' + bed_id
         elif (bed_unit == 'ED'):
             bed_unit = _lookup_unit_from_bed(bed_id, '_'.join([hospital, bed_unit]))
-    elif pv1_bed[0].startswith('100'):
+        
+        bed_id = _canonicalize_bed_id_sj(bed_unit, bed_id)
+            
+    elif pv1_bed[0].startswith('100'):  # use unit code
         # ['10001021', 'EUH B462', 'B462-01', '10001']
         # ['10001029', 'EUH ED 21', '21', '10001']
+        # 10007004 covers both CVICU and CVPODS, so must use bed to disambiguate.
         hospital = pv1_bed[3]  # use PV1.3.4 facility code or name
         bed_unit = pv1_bed[0]  # lookup by department number. 
-        bed_id = pv1_bed[2]        
+        bed_id = pv1_bed[2]
+        if bed_unit == '10007004':
+            bed_unit = "CVPODS" if bed_id.lower().startswith("cv") else "CVICU"
     else:
         #ICU^ICU 17^17^1
         hospital = missing_values[str]
@@ -276,7 +295,7 @@ def _extract_bed_id_euh(pv1_bed) -> tuple:
             bed_unit = "41ICU"
             match = icu41_re.match(bed_id)
             if match:
-                bed_id = match.group(1) + '-' + str(int(match.group(2)) * 100)
+                bed_id = match.group(1) + '-' + f"{int(match.group(2)):02d}"
         else:
             bed_unit = _lookup_unit_from_bed(bed_id, None)
             if bed_unit is None:
@@ -328,11 +347,16 @@ def _extract_bed_id_str(pv1_bed) -> tuple:
         #EJCH-3S-IC01
         #EUH-4TN-T434
         #ESJH-ANES-CART-AD
+        #EUHM-4107-01
         tokens = pv1_bed.split('-')
         if len(tokens) == 3:
             hospital = tokens[0]
             bed_unit = tokens[1]
-            bed_id = _canonicalize_bed_id_euh(bed_unit, tokens[2])
+            if bed_unit[0].isdigit() and bed_unit[1].isdigit():
+                bed_id = "-".join(tokens[1:])
+                bed_unit = _bed_wildcard_to_unit.get(_bed_id_to_wildcard(bed_id)) # replace room number with wildcard to look up unit.
+            else:
+                bed_id = _canonicalize_bed_id_euh(bed_unit, tokens[2])
         elif (tokens[2] == 'CART'):
             hospital = tokens[0]
             bed_unit = '-'.join(tokens[0:3])
@@ -438,5 +462,3 @@ def extract_bed_id(pv1_bed) -> tuple:
 
     # bed_str = "|".join([hospital, bed_unit, bed_id])
     return _canonicalize_location_id(pv1_bed, hospital, bed_unit, bed_id)
-
-

@@ -1,4 +1,29 @@
 {
+  "comments": {
+    "TODO": "revise this system. separate handling of different length strings in the code, separate handling of hospitals and units. use bed only if units are ambiguous, use unit to help identify hospital.",
+    "bed_wildcard_to_unit": {
+      "NICU?-??": "NICU7-01, NICU1-02",
+      "EDH?": "ED^^EDH2^Emory St Joseph's Hospital"
+    },
+    "unit_to_canonical": {
+      "4G": "EUH-4G-G413. and G415 and G417   4G ICU because G413 is associated with 10001054",
+      "6G": "EUH-6G-G615.   G615 is ICU, associated with 10001058 which is EUH 6G ICU",
+      "4107": "EUHM-4107-01",
+      "10006013": "10006013^EJCH IC15^IC15-01^EJCH^^^^^C6",
+      "10007004": "if room is 288-299, CVICU.  if CV**, CVPODS."
+    },
+    "hospital_to_canonical": {
+      "TEC": "Canonical?",
+      "DUN": "Canonical?",
+      "LGR": "Canonical?",
+      "MSK": "Canonical?",
+      "EAC": "Canonical?",
+      "ESPV": "Canonical?"
+    },
+    "unknown": [
+      "10006013^EJCH IC15^IC15-01^EJCH^^^^^C6"
+    ]
+  },
   "bed_wildcard_to_unit": {
     "ED ??": "EJCH_ED",
     "EDMOB??": "EJCH_ED",
@@ -8,6 +33,8 @@
     "NICMOB??": "EJCH_NICU",
     "NICUSR": "EJCH_NICU",
     "NICU??": "EJCH_NICU",
+    "NICU??-01": "EJCH_NICU",
+    "NICU??-02": "EJCH_NICU",
     "JCPACU??": "EJCH_PACU",
     "JCPISO??": "EJCH_PACU",
     "ED??": "ESJH_ED",
@@ -27,6 +54,9 @@
     "E5??-01": "E5ICU",
     "EUH ED ??": "EHED",
     "D2??-01": "D2ICU",
+    "CV??": "CVPODS",
+    "28??": "CVICU",
+    "29??": "CVICU",
     "1160-??": "11SICU",
     "3107-??": "31ICU",
     "3108-??": "31ICU",
@@ -39,6 +69,12 @@
     "WH-TEST": "TEST"
   },
   "unit_to_canonical": {
+    "DUN-ANES-CART": ["DUN", "DUN-ANES-CART"],
+    "EAC-ANES-CART": ["EAC", "EAC-ANES-CART"],
+    "ESPV-ANES-CART": ["ESPV", "ESPV-ANES-CART"],
+    "LGR-ANES-CART": ["LGR", "LGR-ANES-CART"],
+    "MSK-ANES-CART": ["MSK", "MSK-ANES-CART"],
+    "TEC-ANES-CART": ["TEC", "TEC-ANES-CART"],
     "POHA": ["EUOSH", "EHPOHA"],
     "1200": ["EDH", "DH1200"],
     "2600": ["EDH", "DH2600"],
@@ -63,6 +99,7 @@
     "3S": ["EJCH", "3S"],
     "6E": ["EJCH", "6E"],
     "EJCH_ED": ["EJCH", "EJCH_ED"],
+    "NICU": ["EJCH", "EJCH_NICU"],
     "EJCH_NICU": ["EJCH", "EJCH_NICU"],
     "EJCH_PACU": ["EJCH", "EJCH_PACU"],
     "RAD": ["EJCH", "RAD"],
@@ -112,6 +149,7 @@
     "G3ICU": ["EUH", "EUH 3G ICU"],
     "EHN4B": ["EUH", "EUH 4B NORTH"],
     "G4ICU": ["EUH", "EUH 4G ICU"],
+    "4G": ["EUH", "EUH 4G ICU"],
     "4TN": ["EUH", "EUH 4T NORTH ICU"],
     "EHNT4": ["EUH", "EUH 4T NORTH ICU"],
     "E5ICU": ["EUH", "EUH 5E ICU"],
@@ -119,12 +157,14 @@
     "EHNT5": ["EUH", "EUH 5T NORTH ICU"],
     "EHST5": ["EUH", "EUH 5T SOUTH ICU"],
     "G6ICU": ["EUH", "EUH 6G ICU"],
+    "6G": ["EUH", "EUH 6G ICU"],
     "EHED": ["EUH", "EUH EMERGENCY"],
     "EUH-ANES-CART": ["EUH", "EUH-ANES-CART"],
     "EUH-PERF-CART": ["EUH", "EUH-PERF-CART"],
     "11SICU": ["EUHM", "11SICU"],
     "31ICU": ["EUHM", "31ICU"],
     "41ICU": ["EUHM", "41ICU"],
+    "4107": ["EUHM", "41ICU"],
     "71ICU": ["EUHM", "71ICU"],
     "COA": ["EUHM", "COA"],
     "MH11SDU": ["EUHM", "MH11SDU"],
@@ -141,6 +181,7 @@
     "NLIC": ["EUOSH", "NLICU"],
     "NLICU": ["EUOSH", "NLICU"],
     "NLPACU": ["EUOSH", "NLPACU"],
+    "EUOSH-ANES-CART": ["EUOSH", "EUOSH-ANES-CART"],
     "WMCOLO": ["EWAM", "WMCOLO"],
     "WMICC": ["EWAM", "WMICC"],
     "WMORIR": ["EWAM", "WMORIR"],
@@ -219,7 +260,13 @@
     "10001223": ["EUH", "EUH TOWER CARDIAC CATH LAB"],
     "10001226": ["EUH", "EUH ECHO SOUTH"],
     "1000163": ["EUH", "EUH OP PHYSICAL THERAPY"],
-    "1001258": ["EUH", "EUH TOWER CARDIAC PET/CT IMAGING"]
+    "1001258": ["EUH", "EUH TOWER CARDIAC PET/CT IMAGING"],
+    "10006013": ["EJCH", "EJCH IC"],
+    "10007001": ["ESJH", "ICUE"],
+    "10007004": ["ESJH", "CVICU"],
+    "10007005": ["ESJH", "ICUW"],
+    "10008003": ["EDH", "EDH ICU"],
+    "10009060": ["EHH", "EHH ICU"]
   },
   "hospital_to_canonical": {
     "Emory St Joseph's Hospital": "ESJH",
@@ -235,6 +282,12 @@
 		"EUH": "EUH",
 		"EUHM": "EUHM",
     "EUOSH": "EUOSH",
-		"EWAM": "EWAM" 
+		"EWAM": "EWAM",
+    "TEC": "TEC",
+    "DUN": "DUN",
+    "LGR": "LGR",
+    "MSK": "MSK",
+    "EAC": "EAC",
+    "ESPV": "ESPV"
   }
 }
