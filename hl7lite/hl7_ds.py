@@ -56,29 +56,31 @@ class HierarchicalMessage:
         self.pv2 = None
         self.evn = None
         self.dg1 = []
+        self.all = {}
         for fields in hl7_parsed:
             label = fields[0]
+            # add all.
+            if self.all.get(label) is None:
+                self.all[label] = []
+            self.all[label].append(fields)
+            
             if label == "MSH":
                 self.msh = fields
             elif label == "PID":
                 self.pid = fields
             elif label == "PV1":
                 self.pv1 = fields
-                
+
             elif label == "OBR":
                 self.obrs.append({'obr': fields, 'obx': []})
             elif label == "OBX":
                 # add to the last one present.
                 self.obrs[-1]['obx'].append(fields)
-                
-            elif label == "PV2":
-                self.pv2 = fields
-            elif label == "EVN":
-                self.evn = fields
-            elif label == "DG1":
-                self.dg1.append(fields)
-            # the others are ignored.
+
+
+            # the others are saved but not explicitly tracked.
             
+                        
     def __repr__(self):
         obrstr = ''
         for obr in self.obrs:

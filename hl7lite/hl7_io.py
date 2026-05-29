@@ -153,9 +153,9 @@ def _extract_field(target_segment: list, target_field: int):
     return output
 
 #%%
-def read_hl7_file_for_segment(hl7_file: str, fields: list = None, verify_message:bool = False):
+def read_hl7_file_for_segment(hl7_file: str, fields: list = None, verify_message:bool = False) -> list:
 
-    log.info(f"reading {hl7_file} for fields '{fields}'.")
+    # log.debug(f"reading {hl7_file} for fields '{fields}'.")
 
     # organize the target fields a bit.
     target_fields = {}
@@ -223,23 +223,8 @@ def read_hl7_file_for_segment(hl7_file: str, fields: list = None, verify_message
             output = []
             
             msg_out = {}
-            # process the MSH/PID/PV1 parts first - there should be a single entry per message.
-            if 'MSH' in target_fields:
-                for target_field in target_fields['MSH']:
-                    if target_field == 1:
-                        field_str = FIELD_SEPARATOR
-                    else:
-                        field_str = _extract_field(omsg.msh, target_field - 1) # MSH_1 is the field separator so the actual list indices are shifted by -1 
-                    msg_out[f'MSH.{target_field}'] = field_str
-            if 'PID' in target_fields:
-                for target_field in target_fields['PID']:
-                    field_str = _extract_field(omsg.pid, target_field)
-                    msg_out[f'PID.{target_field}'] = field_str
-            if 'PV1' in target_fields:
-                for target_field in target_fields['PV1']:
-                    field_str = _extract_field(omsg.pv1, target_field)
-                    msg_out[f'PV1.{target_field}'] = field_str
-
+            
+            # first handle the OBR and OBX.
             if ('OBR' in target_fields) and ('OBX' not in target_fields):
                 obrs = [obr['obr'] for obr in omsg.obrs]  # get just the obr text lines
                 for obr in obrs:
@@ -264,6 +249,7 @@ def read_hl7_file_for_segment(hl7_file: str, fields: list = None, verify_message
                     for target_field in target_fields['OBR']:
                         field_str = _extract_field(obr_str, target_field)
                         obr_out[f'_OBR.{target_field}'] = field_str
+                    output.append(obr_out)
                     # process OBX lines
                     for obx in obr['obx']:
                         obx_out = obr_out.copy()
@@ -271,9 +257,47 @@ def read_hl7_file_for_segment(hl7_file: str, fields: list = None, verify_message
                             field_str = _extract_field(obx, target_field)
                             obx_out[f'_OBX.{target_field}'] = field_str
                         output.append(obx_out)
+
+            # then iterate over target fields.
+            for (name, ids) in target_fields.items():
+                msg_out = {}
+                if name in ['OBR', 'OBX']:
+                    continue  # already processed above.
+                
+                # process the MSH/PID/PV1/EVN/PV2 parts first - single entry per message.
+                if name in ['MSH']: # MSH is a bit special because of the field separator, so we need to handle it separately.
+                    for target_field in ids:
+                        if target_field is None:
+                            field_str = _extract_field(omsg.msh, None)
+                        elif target_field == 1:
+                            field_str = FIELD_SEPARATOR
+                        else:
+                            field_str = _extract_field(omsg.msh, target_field - 1) # MSH_1 is the field separator so the actual list indices are shifted by -1
+                        msg_out[f'{name}.{target_field}'] = field_str
+                    output.append(msg_out)
+                                    
+                elif name in ['PID']:
+                    for target_field in ids:
+                        field_str = _extract_field(omsg.pid, target_field)
+                        msg_out[f'{name}.{target_field}'] = field_str
+                    output.append(msg_out)
+                elif name in ['PV1']:
+                    for target_field in ids:
+                        field_str = _extract_field(omsg.pv1, target_field)
+                        msg_out[f'{name}.{target_field}'] = field_str
+                    output.append(msg_out)
                         
-            else:
-                output.append(msg_out)
+                else:
+                    segments = omsg.all.get(name, None)
+
+                    if segments is None or len(segments) == 0:  # there may be more than one.
+                        continue
+                    for segment in segments:
+                        for target_field in ids:
+                            field_str = _extract_field(segment, target_field)
+                            msg_out[f'{name}.{target_field}'] = field_str
+                        output.append(msg_out)
+                        
                 
             for out in output:
                 # make 1 string
@@ -284,7 +308,7 @@ def read_hl7_file_for_segment(hl7_file: str, fields: list = None, verify_message
                 data.append("\t".join(out_str))
                                             
                 count += 1
-    log.info(f"Read {count} HL7 messages with total of {len(data)} items from {hl7_file} (for MSH, PV1, PID, counts should be same)")
+    # log.debug(f"Read {count} HL7 messages with total of {len(data)} items from {hl7_file} (for MSH, PV1, PID, counts should be same)")
 
     return data
 
